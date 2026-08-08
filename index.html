@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sandra Bullock Fan Club — The Hub</title>
+
+  <!-- Fonts (system-first with fallback) -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Lightweight reset */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg-1:#071422;--bg-2:#0b2540;--accent:#f2c94c;--muted:#9fb0c7;--card:rgba(255,255,255,0.03);
+      --glass:rgba(255,255,255,0.04);--text:#eef6fb;--success:#66d186;--danger:#ff7b7b;
+    }
+    html,body{height:100%}
+    body{
+      font-family:Inter, Lato, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(600px 300px at 10% 10%, rgba(242,201,76,0.06), transparent), linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 20px;
+      overflow-x:hidden;
+    }
+
+    /* Decorative animated blobs (pure CSS, original art) */
+    .blobs{position:fixed;inset:0;pointer-events:none;z-index:0;}
+    .blob{position:absolute;filter:blur(36px);mix-blend-mode:screen;opacity:0.22;transform-origin:center;animation:blobMove 14s ease-in-out infinite;}
+    .blob.a{width:360px;height:360px;background:linear-gradient(135deg,#f2c94c,#ffd67a);left:-6%;top:10%;animation-duration:18s}
+    .blob.b{width:420px;height:420px;background:linear-gradient(135deg,#6fb3ff,#9bd1ff);right:-8%;top:20%;animation-duration:20s;opacity:0.18}
+    .blob.c{width:240px;height:240px;background:linear-gradient(135deg,#ff8fb0,#ffc1e0);left:20%;bottom:-6%;animation-duration:16s;opacity:0.14}
+    @keyframes blobMove{0%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-14px) scale(1.06)}66%{transform:translate(-18px,16px) scale(.98)}100%{transform:translate(0,0) scale(1)}}
+
+    /* Layout */
+    .frame{width:100%;max-width:1100px;display:grid;grid-template-columns:1fr 420px;gap:36px;align-items:start;position:relative;z-index:1}
+    @media (max-width:980px){.frame{grid-template-columns:1fr;padding-bottom:28px}}
+
+    /* LEFT: hero/overview */
+    .hero{padding:28px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);box-shadow:0 8px 40px rgba(2,6,23,0.6);}
+    .hero .title{font-family: 'Playfair Display', serif;font-size:clamp(28px,4.6vw,52px);line-height:1;margin-bottom:8px}
+    .hero .byline{color:var(--muted);font-size:15px;margin-bottom:18px;max-width:62ch}
+
+    /* Small feature cards */
+    .features{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}
+    .feature{padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+    .feature h4{font-size:13px;margin-bottom:8px}
+    .feature p{color:var(--muted);font-size:13px;line-height:1.5}
+
+    /* RIGHT: interactive panel */
+    .panel{padding:22px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);box-shadow:0 8px 40px rgba(2,6,23,0.6);backdrop-filter: blur(6px)}
+    .panel h3{font-family:'Playfair Display',serif;margin-bottom:6px}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em}
+
+    input[type="text"],input[type="email"],input[type="date"],select,textarea{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:var(--card);color:var(--text);font-size:14px}
+    input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 6px 20px rgba(2,6,23,0.6),0 0 0 6px rgba(242,201,76,0.06);border-color:rgba(242,201,76,0.5);transform:translateY(-1px)}
+
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .row{display:flex;gap:12px;align-items:center}
+
+    /* Chip controls (original UI) */
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);color:var(--muted);background:transparent;font-size:13px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .chip:hover{transform:translateY(-3px)}
+    .chip.active{background:linear-gradient(90deg, rgba(242,201,76,0.08), rgba(242,201,76,0.02));color:var(--text);border-color:rgba(242,201,76,0.2);box-shadow:0 8px 24px rgba(2,6,23,0.5)}
+
+    textarea{min-height:120px;border-radius:10px;resize:vertical}
+
+    .submit-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+    button.primary{background:linear-gradient(90deg,var(--accent),#e9c86b);color:#051126;border:none;padding:12px 18px;border-radius:10px;font-weight:700;cursor:pointer;letter-spacing:0.12em;text-transform:uppercase;box-shadow:0 12px 40px rgba(8,11,23,0.6)}
+    button.primary:hover{transform:translateY(-3px);box-shadow:0 22px 60px rgba(8,11,23,0.7)}
+    button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);padding:10px 14px;border-radius:10px}
+
+    .fine{font-size:12px;color:var(--muted);margin-top:8px}
+
+    /* messages */
+    .msg{display:none;padding:12px;border-radius:8px;font-weight:600}
+    .msg.show{display:block}
+    .msg.success{background:rgba(102,209,134,0.08);color:var(--success);border:1px solid rgba(102,209,134,0.12)}
+    .msg.error{background:rgba(255,123,123,0.06);color:var(--danger);border:1px solid rgba(255,123,123,0.08)}
+
+    footer{grid-column:1/-1;margin-top:18px;text-align:center;color:var(--muted);font-size:12px}
+
+    /* small entrance animation */
+    @keyframes pop{from{transform:translateY(6px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+    .hero,.panel{animation:pop .42s ease both}
+
+  </style>
+</head>
+<body>
+  <!-- decorative original blobs, non-copyright artwork -->
+  <div class="blobs" aria-hidden="true">
+    <div class="blob a" style="border-radius:40% 60% 55% 45%/60% 40% 60% 40%;"></div>
+    <div class="blob b" style="border-radius:60% 40% 70% 30%/40% 60% 30% 70%;"></div>
+    <div class="blob c" style="border-radius:50% 50% 40% 60%/50% 40% 60% 50%;"></div>
+  </div>
+
+  <main class="frame" role="main">
+    <section class="hero" aria-labelledby="title">
+      <h1 id="title" class="title">Sandra Bullock<br><em style="font-style:italic;color:var(--accent);font-weight:400">Fan Club Hub</em></h1>
+      <p class="byline">A fan-created space for celebrating Sandra's films, performances, and philanthropic work. Built with unique, original visuals — no copyrighted images included.</p>
+
+      <div class="features" aria-hidden="false">
+        <div class="feature">
+          <h4>Community Events</h4>
+          <p class="muted">Watch parties, live chats, and themed months curated by fans.</p>
+        </div>
+        <div class="feature">
+          <h4>Film Guides</h4>
+          <p class="muted">Curated lists and discussion prompts to explore Sandra's career.</p>
+        </div>
+        <div class="feature">
+          <h4>Fan Projects</h4>
+          <p class="muted">Creativity from fan art to essays, all original and licensed by creators.</p>
+        </div>
+        <div class="feature">
+          <h4>Charity Spotlights</h4>
+          <p class="muted">Information about causes supported by Sandra and ways to help.</p>
+        </div>
+      </div>
+
+      <p class="fine" style="margin-top:18px">This site is fan-run and independent; no official affiliation is claimed. All visuals here are generative and created specifically for this project.</p>
+    </section>
+
+    <aside class="panel" aria-labelledby="join-heading">
+      <h3 id="join-heading">Join the Hub</h3>
+
+      <div id="feedback" aria-live="polite" style="min-height:24px;margin-bottom:8px"></div>
+
+      <form id="fanForm" action="https://formspree.io/f/mdarwjvl" method="POST" novalidate>
+        <label for="firstName">First name</label>
+        <div class="grid-2" style="margin-bottom:6px">
+          <input id="firstName" name="firstName" type="text" placeholder="First" required autocomplete="given-name">
+          <input id="lastName" name="lastName" type="text" placeholder="Last" required autocomplete="family-name">
+        </div>
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required autocomplete="email">
+
+        <div class="row" style="margin-top:8px;gap:12px">
+          <div style="flex:1">
+            <label for="dob">Date of birth</label>
+            <input id="dob" name="dob" type="date">
+          </div>
+          <div style="flex:1">
+            <label for="country">Country</label>
+            <select id="country" name="country" required>
+              <option value="" disabled selected>Select country</option>
+              <option>United States</option>
+              <option>United Kingdom</option>
+              <option>Canada</option>
+              <option>Australia</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <label>How long have you followed Sandra?</label>
+        <div class="chips" role="radiogroup" aria-label="fan duration">
+          <label class="chip"><input type="radio" name="fanSince" value="Just started">Just started</label>
+          <label class="chip"><input type="radio" name="fanSince" value="1-5 years">1–5 years</label>
+          <label class="chip"><input type="radio" name="fanSince" value="5-10 years">5–10 years</label>
+          <label class="chip"><input type="radio" name="fanSince" value="10+ years">10+ years</label>
+        </div>
+
+        <label for="favRole">Favorite role</label>
+        <select id="favRole" name="favRole">
+          <option value="" disabled selected>Choose a role</option>
+          <option>Annie — Speed</option>
+          <option>Leigh Anne — The Blind Side</option>
+          <option>Gracie — Miss Congeniality</option>
+          <option>Malorie — Bird Box</option>
+          <option>Other</option>
+        </select>
+
+        <label>Interests (pick any)</label>
+        <div class="chips" id="interestGroup">
+          <label class="chip"><input type="checkbox" name="interest" value="movies">Movies & performances</label>
+          <label class="chip"><input type="checkbox" name="interest" value="interviews">Interviews</label>
+          <label class="chip"><input type="checkbox" name="interest" value="charity">Charity work</label>
+          <label class="chip"><input type="checkbox" name="interest" value="events">Events & watch parties</label>
+        </div>
+
+        <label for="message">Message (optional)</label>
+        <textarea id="message" name="message" placeholder="Share what her work means to you…"></textarea>
+
+        <label for="instagram">Social handle (optional)</label>
+        <input id="instagram" name="instagram" type="text" placeholder="@yourhandle">
+
+        <label for="favoriteShow">Favorite film or show</label>
+        <select id="favoriteShow" name="favoriteShow">
+          <option value="" disabled selected>Pick one</option>
+          <option>Speed</option>
+          <option>The Blind Side</option>
+          <option>Gravity</option>
+          <option>Bird Box</option>
+          <option>Multiple titles</option>
+        </select>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-top:8px">
+          <label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="newsletter" name="newsletter" value="yes"> <span style="font-size:14px;color:var(--muted)">Sign me up for club updates</span></label>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" id="submitBtn" class="primary">Join the Hub</button>
+          <button type="button" id="clearBtn" class="ghost">Clear</button>
+        </div>
+
+        <p class="fine">We respect your privacy — your information is used only to send community updates.</p>
+      </form>
+
+      <div id="success" class="msg success" role="status" aria-live="polite" style="margin-top:12px">Thanks — check your inbox for confirmation.</div>
+      <div id="error" class="msg error" role="alert" aria-live="assertive" style="margin-top:12px">Submission error. Try again later.</div>
+    </aside>
+
+    <footer>Fan-run community · Built with original visuals and care</footer>
+  </main>
+
+  <script>
+    // Micro-interactions: chips toggle active class and sync inputs. All visuals original CSS only.
+    document.querySelectorAll('.chip').forEach(chip => {
+      const input = chip.querySelector('input');
+      if (!input) return;
+      // init
+      if (input.checked) chip.classList.add('active');
+      // clicking the label toggles checked state and class
+      chip.addEventListener('click', (e) => {
+        // prevent double toggles when clicking nested input
+        if (input.type === 'radio') {
+          const name = input.name;
+          document.querySelectorAll(`input[type=radio][name="${name}"]`).forEach(r=> r.closest('.chip')?.classList.remove('active'));
+          input.checked = true;
+          chip.classList.add('active');
+        } else {
+          input.checked = !input.checked;
+          chip.classList.toggle('active', input.checked);
+        }
+      });
+    });
+
+    // Form behavior: local save, lightweight validation, submit to Formspree
+    const form = document.getElementById('fanForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const successEl = document.getElementById('success');
+    const errorEl = document.getElementById('error');
+    const feedback = document.getElementById('feedback');
+
+    function validate() {
+      const required = form.querySelectorAll('[required]');
+      for (const el of required) {
+        if (!el.value || el.value.trim() === '') return {ok:false, el};
+      }
+      return {ok:true};
+    }
+
+    // Save partial form to localStorage to improve UX (advanced but respectful of privacy)
+    const STORAGE_KEY = 'sandra_hub_form_v1';
+    function saveToLocal() {
+      try {
+        const data = {};
+        new FormData(form).forEach((v,k)=>{
+          // combine multiple checkboxes of same name
+          if (data[k]) {
+            data[k] = data[k] + ';;' + v;
+          } else data[k] = v;
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch(e) { /* ignore */ }
+    }
+    function restoreFromLocal(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY); if(!raw) return;
+        const data = JSON.parse(raw);
+        for (const [k,v] of Object.entries(data)){
+          const els = form.querySelectorAll(`[name="${k}"]`);
+          if(!els || els.length===0) continue;
+          if (els[0].type === 'checkbox' || els[0].type === 'radio'){
+            const values = String(v).split(';;');
+            els.forEach(el=> el.checked = values.includes(el.value));
+            // sync chip classes
+            els.forEach(el=> el.closest('.chip')?.classList.toggle('active', el.checked));
+          } else {
+            els[0].value = v;
+          }
+        }
+      }catch(e){}
+    }
+
+    // throttle save
+    let saveTimer;
+    form.addEventListener('input', ()=>{
+      clearTimeout(saveTimer); saveTimer = setTimeout(saveToLocal, 550);
+    });
+
+    // restore saved form
+    restoreFromLocal();
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      successEl.classList.remove('show'); errorEl.classList.remove('show'); feedback.textContent='';
+      const ok = validate(); if(!ok.ok){ feedback.textContent='Please fill required fields.'; feedback.style.color='var(--accent)'; ok.el.focus(); return; }
+
+      submitBtn.disabled = true; submitBtn.textContent='Sending...';
+
+      // prepare FormData and combine multi-check values into single field
+      const data = new FormData(form);
+      const interests = Array.from(form.querySelectorAll('input[name="interest"]:checked')).map(i=>i.value);
+      data.set('interests', interests.length?interests.join(', '):'None');
+
+      try{
+        const resp = await fetch(form.action, {method:'POST',body:data,headers:{'Accept':'application/json'}});
+        if (resp.ok){ successEl.classList.add('show'); localStorage.removeItem(STORAGE_KEY); form.reset(); document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); }
+        else { const json = await resp.json().catch(()=>({})); throw new Error(json.error || 'submission failed'); }
+      }catch(err){ console.error(err); errorEl.classList.add('show'); }
+      finally{ submitBtn.disabled=false; submitBtn.textContent='Join the Hub'; }
+    });
+
+    clearBtn.addEventListener('click', ()=>{ form.reset(); localStorage.removeItem(STORAGE_KEY); document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); successEl.classList.remove('show'); errorEl.classList.remove('show'); feedback.textContent=''; });
+
+  </script>
+</body>
+</html>
