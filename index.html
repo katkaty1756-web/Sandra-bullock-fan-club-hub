@@ -84,6 +84,10 @@
     @keyframes pop{from{transform:translateY(6px) scale(.98);opacity:0}to{transform:none;opacity:1}}
     .hero,.panel{animation:pop .42s ease both}
 
+    /* spinner */
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(5,17,30,0.12);border-top-color:rgba(5,17,30,0.6);border-radius:50%;animation:spin .9s linear infinite;vertical-align:middle;margin-right:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
   </style>
 </head>
 <body>
@@ -127,6 +131,11 @@
       <div id="feedback" aria-live="polite" style="min-height:24px;margin-bottom:8px"></div>
 
       <form id="fanForm" action="https://formspree.io/f/xvkpzlnl" method="POST" novalidate>
+        <!-- Honeypot to reduce bot spam -->
+        <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" />
+        <!-- Optional: set email subject in Formspree notification -->
+        <input type="hidden" name="_subject" value="Sandra Hub submission" />
+
         <label for="firstName">First name</label>
         <div class="grid-2" style="margin-bottom:6px">
           <input id="firstName" name="firstName" type="text" placeholder="First" required autocomplete="given-name">
@@ -201,7 +210,7 @@
         </div>
 
         <div class="submit-row">
-          <button type="submit" id="submitBtn" class="primary">Join the Hub</button>
+          <button type="submit" id="submitBtn" class="primary"><span id="btnSpinner" style="display:none" class="spinner"></span><span id="btnText">Join the Hub</span></button>
           <button type="button" id="clearBtn" class="ghost">Clear</button>
         </div>
 
@@ -224,7 +233,6 @@
       if (input.checked) chip.classList.add('active');
       // clicking the label toggles checked state and class
       chip.addEventListener('click', (e) => {
-        // prevent double toggles when clicking nested input
         if (input.type === 'radio') {
           const name = input.name;
           document.querySelectorAll(`input[type=radio][name="${name}"]`).forEach(r=> r.closest('.chip')?.classList.remove('active'));
@@ -240,6 +248,8 @@
     // Form behavior: local save, lightweight validation, submit to Formspree
     const form = document.getElementById('fanForm');
     const submitBtn = document.getElementById('submitBtn');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const btnText = document.getElementById('btnText');
     const clearBtn = document.getElementById('clearBtn');
     const successEl = document.getElementById('success');
     const errorEl = document.getElementById('error');
@@ -253,16 +263,13 @@
       return {ok:true};
     }
 
-    // Save partial form to localStorage to improve UX (advanced but respectful of privacy)
+    // Save partial form to localStorage to improve UX
     const STORAGE_KEY = 'sandra_hub_form_v1';
     function saveToLocal() {
       try {
         const data = {};
         new FormData(form).forEach((v,k)=>{
-          // combine multiple checkboxes of same name
-          if (data[k]) {
-            data[k] = data[k] + ';;' + v;
-          } else data[k] = v;
+          if (data[k]) data[k] = data[k] + ';;' + v; else data[k] = v;
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch(e) { /* ignore */ }
@@ -277,7 +284,6 @@
           if (els[0].type === 'checkbox' || els[0].type === 'radio'){
             const values = String(v).split(';;');
             els.forEach(el=> el.checked = values.includes(el.value));
-            // sync chip classes
             els.forEach(el=> el.closest('.chip')?.classList.toggle('active', el.checked));
           } else {
             els[0].value = v;
@@ -288,31 +294,56 @@
 
     // throttle save
     let saveTimer;
-    form.addEventListener('input', ()=>{
-      clearTimeout(saveTimer); saveTimer = setTimeout(saveToLocal, 550);
-    });
-
-    // restore saved form
+    form.addEventListener('input', ()=>{ clearTimeout(saveTimer); saveTimer = setTimeout(saveToLocal, 550); });
     restoreFromLocal();
+
+    function showSpinner(on){ btnSpinner.style.display = on ? 'inline-block' : 'none'; btnText.style.opacity = on ? 0.9 : 1; }
 
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       successEl.classList.remove('show'); errorEl.classList.remove('show'); feedback.textContent='';
-      const ok = validate(); if(!ok.ok){ feedback.textContent='Please fill required fields.'; feedback.style.color='var(--accent)'; ok.el.focus(); return; }
 
-      submitBtn.disabled = true; submitBtn.textContent='Sending...';
+      const ok = validate();
+      if(!ok.ok){ feedback.textContent='Please fill required fields.'; feedback.style.color='var(--accent)'; ok.el.focus(); return; }
 
-      // prepare FormData and combine multi-check values into single field
+      // check honeypot
+      if (form.querySelector('[name="_gotcha"]').value) {
+        // silently ignore bot
+        return;
+      }
+
+      submitBtn.disabled = true; showSpinner(true); submitBtn.setAttribute('aria-busy','true');
+
+      // prepare form data
       const data = new FormData(form);
       const interests = Array.from(form.querySelectorAll('input[name="interest"]:checked')).map(i=>i.value);
       data.set('interests', interests.length?interests.join(', '):'None');
 
       try{
-        const resp = await fetch(form.action, {method:'POST',body:data,headers:{'Accept':'application/json'}});
-        if (resp.ok){ successEl.classList.add('show'); localStorage.removeItem(STORAGE_KEY); form.reset(); document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); }
-        else { const json = await resp.json().catch(()=>({})); throw new Error(json.error || 'submission failed'); }
-      }catch(err){ console.error(err); errorEl.classList.add('show'); }
-      finally{ submitBtn.disabled=false; submitBtn.textContent='Join the Hub'; }
+        const resp = await fetch(form.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } });
+        const json = await resp.json().catch(()=>null);
+
+        if (resp.ok) {
+          successEl.classList.add('show');
+          localStorage.removeItem(STORAGE_KEY);
+          form.reset();
+          document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+          // keep success visible; optionally auto-hide after delay
+        } else {
+          // Formspree returns useful errors in JSON.message or error
+          const msg = (json && (json.error || json.message)) ? (json.error || json.message) : 'Form submission failed. Please try again.';
+          errorEl.textContent = msg;
+          errorEl.classList.add('show');
+          console.error('Formspree error', resp.status, json || await resp.text());
+        }
+      } catch (err) {
+        console.error('Network error', err);
+        errorEl.textContent = 'Network error. Please check your connection and try again.';
+        errorEl.classList.add('show');
+      } finally {
+        submitBtn.disabled = false; showSpinner(false); submitBtn.removeAttribute('aria-busy');
+        submitBtn.focus();
+      }
     });
 
     clearBtn.addEventListener('click', ()=>{ form.reset(); localStorage.removeItem(STORAGE_KEY); document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); successEl.classList.remove('show'); errorEl.classList.remove('show'); feedback.textContent=''; });
